@@ -1,0 +1,26 @@
+{
+  "name": "schmiddim/thing-speak-temperatures",
+  "description": "Temperature in my rooms.",
+  "homepage": "http://www.radikalblogger.de",
+  "license": "GPL-3.0",
+  "autoload": {
+    "psr-0": {"Mvg\\": "./src"}
+  },
+  "authors": [
+    {
+      "name": "Michael Schmitt",
+      "email": "schmiddim@gmx.at"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=5.5",
+    "secondtruth/phar-compiler": "1.0.0",
+    "zendframework/zend-http": "2.5.2",
+    "zendframework/zend-console":"2.5.1",
+    "zendframework/zend-json" :"2.5.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.8.6"
+  }
+}

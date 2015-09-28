@@ -1,6 +1,6 @@
 {
   "name": "schmiddim/thing-speak-temperatures",
-  "description": "Temperature in my rooms.",
+  "description": "Temperatures in my flat.",
   "homepage": "http://www.radikalblogger.de",
   "license": "GPL-3.0",
   "autoload": {

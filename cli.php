@@ -7,10 +7,28 @@
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor/autoload.php';
 
+try {
+	$opts = new Zend\Console\Getopt(
+		array(
+			'time|t' => 'show how old is the value',
+			'name|n' => 'show the name of the value',
+			'channels|c=s' => 'Departure Stations - separate multiple stations with ;',
+		)
+	);
+	$opts->parse();
 
-//wohnzimmer 58117
-//büro 58114
-$thingSpeakChannels = array(58117, 58114);
+} catch (Zend\Console\Exception\RuntimeException $e) {
+	echo $e->getUsageMessage();
+	exit;
+}
+if (null === $opts->getOption('c')) {
+	echo $opts->getUsageMessage();
+	exit;
+}
+
+//Stations
+$channelString = trim($opts->getOption('c'));
+$channels = explode(';', $channelString);
 
 
 /**
@@ -37,42 +55,48 @@ $channelNames = array();
 $channelValues = array();
 $dateValues = array();
 $dateIntervalsInSeconds = array();
-foreach ($thingSpeakChannels as $channelId) {
-	$url = sprintf('http://api.thingspeak.com/channels/%d/feed.json', $channelId);
-	$client->setUri($url)->setMethod(\Zend\Http\Request::METHOD_GET);
-	$response = $client->send();
+foreach ($channels as $channelId) {
+	if (false === empty($channelId)) {
+		$url = sprintf('http://api.thingspeak.com/channels/%d/feed.json', $channelId);
+		$client->setUri($url)->setMethod(\Zend\Http\Request::METHOD_GET);
+		$response = $client->send();
 
-	$responseObject = \Zend\Json\Json::decode($response->getBody());
-	$lastRecord = end($responseObject->feeds);
+		$responseObject = \Zend\Json\Json::decode($response->getBody());
+		$lastRecord = end($responseObject->feeds);
 
-	$date = new \DateTime($lastRecord->created_at);
-	$date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
-	$now = new \DateTime();
-	//@see http://php.net/manual/de/dateinterval.format.php
-	$interval = $now->diff($date);
-	$dateIntervalsInSeconds[] = $interval->s;
-	$dateValues[] = $date->format('Y-m-d H:i:s');
+		$date = new \DateTime($lastRecord->created_at);
+		$date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+		$now = new \DateTime();
+		//@see http://php.net/manual/de/dateinterval.format.php
+		$interval = $now->diff($date);
+		$dateIntervalsInSeconds[] = $interval->s;
+		$dateValues[] = $date->format('Y-m-d H:i:s');
 
-	$channelNames[] = $responseObject->channel->name;
-	$channelValues[] = $lastRecord->field1;
+		$channelNames[] = $responseObject->channel->name;
+		$channelValues[] = $lastRecord->field1;
 
-	if (mb_strlen($responseObject->channel->name) > $maxLenChannelName) {
-		$maxLenChannelName = mb_strlen($responseObject->channel->name);
+		if (mb_strlen($responseObject->channel->name) > $maxLenChannelName) {
+			$maxLenChannelName = mb_strlen($responseObject->channel->name);
+		}
+		if (mb_strlen($lastRecord->field1) > $maxLenChannelValue) {
+			$maxLenChannelValue = mb_strlen($lastRecord->field1);
+		}
+		if (mb_strlen($interval->s) > $maxLenDateIntervalInSeconds) {
+			$maxLenDateIntervalInSeconds = mb_strlen($interval->s);
+		}
+
+
 	}
-	if (mb_strlen($lastRecord->field1) > $maxLenChannelValue) {
-		$maxLenChannelValue = mb_strlen($lastRecord->field1);
-	}
-	if (mb_strlen($interval->s) > $maxLenDateIntervalInSeconds) {
-		$maxLenDateIntervalInSeconds = mb_strlen($interval->s);
-	}
-
-
 }
 
 $str = '';
 foreach ($channelNames as $index => $channelName) {
-	$str .= mb_str_pad($dateIntervalsInSeconds [$index] . ' s ago', $maxLenDateIntervalInSeconds + 3, ' ', STR_PAD_RIGHT);
-	$str .= mb_str_pad($channelName, $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
+	if (true === $opts->getOption('t')) {
+		$str .= mb_str_pad($dateIntervalsInSeconds[$index] . 's ago ', $maxLenDateIntervalInSeconds + 3, ' ', STR_PAD_RIGHT);
+	}
+	if (true === $opts->getOption('n')) {
+		$str .= mb_str_pad($channelName, $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
+	}
 	$str .= $channelValues[$index] . ' °C' . PHP_EOL;
 }
 echo $str;

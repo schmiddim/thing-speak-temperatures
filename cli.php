@@ -62,6 +62,7 @@ foreach ($channels as $channelId) {
 		$response = $client->send();
 
 		$responseObject = \Zend\Json\Json::decode($response->getBody());
+		$responseAsArray = (array)$responseObject;
 		$lastRecord = end($responseObject->feeds);
 
 		$date = new \DateTime($lastRecord->created_at);
@@ -75,6 +76,8 @@ foreach ($channels as $channelId) {
 		$channelNames[] = $responseObject->channel->name;
 		$channelValues[] = $lastRecord->field1;
 
+		$numberOfChannels = count((array)$lastRecord) - 2;
+		$arrayObject = (array)$lastRecord;
 		if (mb_strlen($responseObject->channel->name) > $maxLenChannelName) {
 			$maxLenChannelName = mb_strlen($responseObject->channel->name);
 		}
@@ -91,12 +94,20 @@ foreach ($channels as $channelId) {
 
 $str = '';
 foreach ($channelNames as $index => $channelName) {
+	if (true === $opts->getOption('n')) {
+		$str .= $channelName .' ';
+	}
 	if (true === $opts->getOption('t')) {
 		$str .= mb_str_pad($dateIntervalsInSeconds[$index] . 's ago ', $maxLenDateIntervalInSeconds + 3, ' ', STR_PAD_RIGHT);
+		$str.="\n";
 	}
-	if (true === $opts->getOption('n')) {
-		$str .= mb_str_pad($channelName, $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
-	}
-	$str .= $channelValues[$index] . ' °C' . PHP_EOL;
+
 }
 echo $str;
+#	$str .= $channelValues[$index] . ' °C' . PHP_EOL;
+for ($i = 1; $i <= $numberOfChannels; $i++) {
+	$attributeName = 'field' . $i;
+	echo $responseObject->channel->{$attributeName};
+	echo ' ' . $arrayObject[$attributeName] . "\n";
+
+}

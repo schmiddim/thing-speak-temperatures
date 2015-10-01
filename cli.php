@@ -70,7 +70,25 @@ foreach ($channels as $channelId) {
 		$now = new \DateTime();
 		//@see http://php.net/manual/de/dateinterval.format.php
 		$interval = $now->diff($date);
-		$dateIntervalsInSeconds[] = $interval->s;
+
+		//calculate the absolute interval
+		$hours =$interval->h;
+		$timeString='';
+		if($interval->h >0) {
+			$timeString.=$interval->h .':';
+
+		}
+		if($interval->i >0 || $interval->h >0) {
+			$timeString.=$interval->i. ':';
+
+		}
+		if($interval->s >0) {
+			$timeString.=$interval->s;
+
+		}
+		$dateIntervalsInSeconds[] = $timeString;
+
+
 		$dateValues[] = $date->format('Y-m-d H:i:s');
 
 		$channelNames[] = $responseObject->channel->name;

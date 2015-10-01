@@ -10,9 +10,10 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'vendor/autoload.php';
 try {
     $opts = new Zend\Console\Getopt(
         array(
-            'time|t' => 'show how old is the value',
-            'name|n' => 'show the name of the value',
+            'time|t' => 'show how old  the record is',
+            'name|n' => 'show the records name',
             'channels|c=s' => 'Channel ID from ThingSpeak',
+            'field|f=d' => 'display only this field'
         )
     );
     $opts->parse();
@@ -82,15 +83,40 @@ if (false === empty($channelId)) {
 
 
 //output
+$str = '';
+if (null !== $opts->getOption('t')) {
+    $str .= $channelName . ' ' . $dateIntervalsInSeconds . ' ago ' . PHP_EOL;
 
-$str = $channelName . ' ' . $dateIntervalsInSeconds . ' ago ' . PHP_EOL;
-for ($i = 1; $i <= $numberOfChannels; $i++) {
+}
 
-    $attributeName = 'field' . $i;
-    $str .= mb_str_pad($responseObject->channel->{$attributeName}, $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
-    $str .= $arrayObject[$attributeName];
-    $str .= PHP_EOL;
+if (null === $opts->getOption('f')) {
 
+    for ($i = 1; $i <= $numberOfChannels; $i++) {
+
+        $attributeName = 'field' . $i;
+
+        if (null !== $opts->getOption('n')) {
+            $str .= mb_str_pad($responseObject->channel->{$attributeName}, $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
+        }
+        $str .= $arrayObject[$attributeName];
+        $str .= PHP_EOL;
+
+    }
+} else {
+    $i = $opts->getOption('f');
+
+    if (array_key_exists('field'.$i, $arrayObject)) {
+
+        $attributeName = 'field' . $i;
+
+        if (null !== $opts->getOption('n')) {
+            $str .= mb_str_pad($responseObject->channel->{$attributeName}, $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
+        }
+        $str .= $arrayObject[$attributeName];
+        $str .= PHP_EOL;
+    }else {
+        $str.=sprintf('Field %s is not set!' . PHP_EOL, $i);
+    }
 }
 
 echo $str;

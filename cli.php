@@ -72,14 +72,12 @@ foreach ($channels as $channelId) {
         $now = new \DateTime();
         //@see http://php.net/manual/de/dateinterval.format.php
         $interval = $now->diff($date);
-        $dateIntervalsInSeconds[] = $interval->format('%H:%I:%s');;
+        $dateIntervalsInSeconds = $interval->format('%H:%I:%s');;
 
 
         $dateValues[] = $date->format('Y-m-d H:i:s');
-
         $channelNames[] = $responseObject->channel->name;
         $channelValues[] = $lastRecord->field1;
-
         $numberOfChannels = count((array)$lastRecord) - 2;
         $arrayObject = (array)$lastRecord;
         if (mb_strlen($responseObject->channel->name) > $maxLenChannelName) {
@@ -91,28 +89,20 @@ foreach ($channels as $channelId) {
         if (mb_strlen($interval->s) > $maxLenDateIntervalInSeconds) {
             $maxLenDateIntervalInSeconds = mb_strlen($interval->s);
         }
-
-
     }
 }
 
-$str = '';
-foreach ($channelNames as $index => $channelName) {
-    if (true === $opts->getOption('n')) {
-        $str .= $channelName . ' ';
-    }
-    if (true === $opts->getOption('t')) {
-        $str .= mb_str_pad($dateIntervalsInSeconds[$index] . 's ago ', $maxLenDateIntervalInSeconds + 3, ' ',
-            STR_PAD_RIGHT);
-        $str .= "\n";
-    }
+//output
 
-}
-echo $str;
-#	$str .= $channelValues[$index] . ' °C' . PHP_EOL;
+$str= $channelNames[0] . ' ' . $dateIntervalsInSeconds . ' ago ' . PHP_EOL;
 for ($i = 1; $i <= $numberOfChannels; $i++) {
+
     $attributeName = 'field' . $i;
-    echo $responseObject->channel->{$attributeName};
-    echo ' ' . $arrayObject[$attributeName] . "\n";
+    $str .= mb_str_pad($responseObject->channel->{$attributeName} , $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
+    $str.=$arrayObject[$attributeName];
+
+    $str.=PHP_EOL;
 
 }
+
+echo $str;

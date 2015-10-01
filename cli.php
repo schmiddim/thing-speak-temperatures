@@ -29,7 +29,7 @@ if (null === $opts->getOption('c')) {
 //Stations
 $channelString = trim($opts->getOption('c'));
 $channels = explode(';', $channelString);
-
+$channelId = trim($opts->getOption('c'));
 
 /**
  * found here http://stackoverflow.com/a/11871948
@@ -57,7 +57,7 @@ $channelNames = array();
 $channelValues = array();
 $dateValues = array();
 $dateIntervalsInSeconds = array();
-foreach ($channels as $channelId) {
+
     if (false === empty($channelId)) {
         $url = sprintf('http://api.thingspeak.com/channels/%d/feed.json', $channelId);
         $client->setUri($url)->setMethod(\Zend\Http\Request::METHOD_GET);
@@ -90,7 +90,7 @@ foreach ($channels as $channelId) {
             $maxLenDateIntervalInSeconds = mb_strlen($interval->s);
         }
     }
-}
+
 
 //output
 

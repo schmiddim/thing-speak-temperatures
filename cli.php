@@ -12,7 +12,7 @@ try {
         array(
             'time|t' => 'show how old is the value',
             'name|n' => 'show the name of the value',
-            'channels|c=s' => 'Departure Stations - separate multiple stations with ;',
+            'channels|c=s' => 'Channel ID from ThingSpeak',
         )
     );
     $opts->parse();
@@ -25,10 +25,7 @@ if (null === $opts->getOption('c')) {
     echo $opts->getUsageMessage();
     exit;
 }
-
-//Stations
-$channelString = trim($opts->getOption('c'));
-$channels = explode(';', $channelString);
+//Channel ID
 $channelId = trim($opts->getOption('c'));
 
 /**
@@ -51,57 +48,48 @@ $client = new Zend\Http\Client();
 
 $maxLenChannelName = 0;
 $maxLenChannelValue = 0;
-$maxLenDateIntervalInSeconds = 0;
-
-$channelNames = array();
-$channelValues = array();
-$dateValues = array();
-$dateIntervalsInSeconds = array();
-
-    if (false === empty($channelId)) {
-        $url = sprintf('http://api.thingspeak.com/channels/%d/feed.json', $channelId);
-        $client->setUri($url)->setMethod(\Zend\Http\Request::METHOD_GET);
-        $response = $client->send();
-
-        $responseObject = \Zend\Json\Json::decode($response->getBody());
-        $responseAsArray = (array)$responseObject;
-        $lastRecord = end($responseObject->feeds);
-
-        $date = new \DateTime($lastRecord->created_at);
-        $date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
-        $now = new \DateTime();
-        //@see http://php.net/manual/de/dateinterval.format.php
-        $interval = $now->diff($date);
-        $dateIntervalsInSeconds = $interval->format('%H:%I:%s');;
 
 
-        $dateValues[] = $date->format('Y-m-d H:i:s');
-        $channelNames[] = $responseObject->channel->name;
-        $channelValues[] = $lastRecord->field1;
-        $numberOfChannels = count((array)$lastRecord) - 2;
-        $arrayObject = (array)$lastRecord;
-        if (mb_strlen($responseObject->channel->name) > $maxLenChannelName) {
-            $maxLenChannelName = mb_strlen($responseObject->channel->name);
-        }
-        if (mb_strlen($lastRecord->field1) > $maxLenChannelValue) {
-            $maxLenChannelValue = mb_strlen($lastRecord->field1);
-        }
-        if (mb_strlen($interval->s) > $maxLenDateIntervalInSeconds) {
-            $maxLenDateIntervalInSeconds = mb_strlen($interval->s);
-        }
+if (false === empty($channelId)) {
+    $url = sprintf('http://api.thingspeak.com/channels/%d/feed.json', $channelId);
+    $client->setUri($url)->setMethod(\Zend\Http\Request::METHOD_GET);
+    $response = $client->send();
+
+    $responseObject = \Zend\Json\Json::decode($response->getBody());
+    $responseAsArray = (array)$responseObject;
+    $lastRecord = end($responseObject->feeds);
+
+    //get date of last record
+    $date = new \DateTime($lastRecord->created_at);
+    $date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+    $now = new \DateTime();
+    //@see http://php.net/manual/de/dateinterval.format.php
+    $interval = $now->diff($date);
+    $dateIntervalsInSeconds = $interval->format('%H:%I:%s');;
+
+    $channelName = $responseObject->channel->name;
+    $numberOfChannels = count((array)$lastRecord) - 2;
+
+
+    $arrayObject = (array)$lastRecord;
+    if (mb_strlen($responseObject->channel->name) > $maxLenChannelName) {
+        $maxLenChannelName = mb_strlen($responseObject->channel->name);
     }
+    if (mb_strlen($lastRecord->field1) > $maxLenChannelValue) {
+        $maxLenChannelValue = mb_strlen($lastRecord->field1);
+    }
+}
 
 
 //output
 
-$str= $channelNames[0] . ' ' . $dateIntervalsInSeconds . ' ago ' . PHP_EOL;
+$str = $channelName . ' ' . $dateIntervalsInSeconds . ' ago ' . PHP_EOL;
 for ($i = 1; $i <= $numberOfChannels; $i++) {
 
     $attributeName = 'field' . $i;
-    $str .= mb_str_pad($responseObject->channel->{$attributeName} , $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
-    $str.=$arrayObject[$attributeName];
-
-    $str.=PHP_EOL;
+    $str .= mb_str_pad($responseObject->channel->{$attributeName}, $maxLenChannelName + 3, ' ', STR_PAD_RIGHT);
+    $str .= $arrayObject[$attributeName];
+    $str .= PHP_EOL;
 
 }
 

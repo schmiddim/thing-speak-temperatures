@@ -3,12 +3,12 @@ from thingspeak
 
 Usage:
 
-Usage: cli.php [ options ]
+cli.php [ options ]
 --time|-t              show how old  the record is
 --name|-n              show the records name
 --channels|-c <string> Channel ID from ThingSpeak
 --field|-f <string>    display only this field
-
+--ids|-i               display the channel ids
 
 Example:
 php cli.php --channels=58114 -nt -f 1
